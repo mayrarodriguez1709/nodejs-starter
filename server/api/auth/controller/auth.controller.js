@@ -3,6 +3,7 @@
 var UserDao = require('../../user/dao/user.dao');
 
 var jwt = require('../../auth/jwt/jwt.service');
+var jwtMidd = require('../../auth/jwt/jwt.middleware');
 var bcrypt = require('bcrypt-nodejs');
 
 const { check, validationResult } = require('express-validator/check');
@@ -30,8 +31,8 @@ function register(req, res, next) {
             if(hash){
                 userObj.password = hash;
                 UserDao['create'](userObj)
-                    .then(async _user =>{
-                        delete _user.password;
+                    .then(async _user => {
+                        _user.password = undefined;
                         res.status(201).json({"user": _user});
                     }).catch(err => {
                     if(err.code === 11000){
@@ -55,7 +56,13 @@ function register(req, res, next) {
     }
 }
 
-
+/**
+ * Login ùnico
+ * @param req
+ * @param res
+ * @param next
+ * @returns {*}
+ */
 function login(req, res, next) {
     try{
         validationResult(req).throw();
@@ -68,16 +75,40 @@ function login(req, res, next) {
                 if(!user){
                     res.status(404).json({"err": 'User not found.'});
                 }else {
-                    bcrypt.compare(password, user.password, (err) => {
-                        if(err){
-                            res.status(400).json({"err": 'Invalid credentials.'});
-                        }else {
-                            res.status(200).json({"token": jwt.createToken(user)});
-                        }
-                    });
+                    if (!user.isActive) {
+                        res.status(403).json({"err": 'Account not active.'});
+                    }else {
+                        bcrypt.compare(password, user.password, (err) => {
+
+                            if(err){
+                                res.status(400).json({"err": 'Invalid credentials.'});
+                            }else {
+                                user.password = undefined;
+                                res.status(200).json({"token": jwt.createToken(user), "user": user});
+                            }
+                        });
+                    }
                 }
             })
             .catch(err => res.status(500).json({"err": err}));
+    }catch (err){
+        const errorFormatter = ({ msg, param }) => {
+            return `The value: ${param} ${msg}`;
+        };
+        const result = validationResult(req).formatWith(errorFormatter);
+        if(!result.isEmpty()){
+            return res.status(422).json({ errors: result.array() });
+        }
+    }
+}
+
+function getRoleByToken(req, res, next) {
+    try{
+        validationResult(req).throw();
+
+        const token = jwtMidd.removeBearerFromToken(req);
+        const userInfo = jwt.getRole(token);
+        res.status(200).json({"user": userInfo});
     }catch (err){
         const errorFormatter = ({ msg, param }) => {
             return `The value: ${param} ${msg}`;
@@ -115,6 +146,7 @@ const loginValidation = [
 module.exports = {
     register,
     login,
+    getRoleByToken,
     objectValidation,
     idAndOthersValidations,
     loginValidation

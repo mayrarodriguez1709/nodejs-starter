@@ -7,11 +7,18 @@ const mdAuth = require('../../auth/jwt/jwt.middleware');
 
 var api = express.Router();
 
+/*
 api.get(endpoint, [mdAuth.ensureAuth],UserController.getAll);
 api.get(`${endpoint}/:id`, [ mdAuth.ensureAuth, UserController.idAndOthersValidations ], UserController.getById);
 api.post(endpoint, UserController.objectValidation, UserController.create);
 api.patch(`${endpoint}/:id`, [ mdAuth.ensureAuth, UserController.idAndOthersValidations], UserController.update);
 api.delete(`${endpoint}/:id`, [ mdAuth.ensureAuth, UserController.idAndOthersValidations ], UserController.remove);
+*/
 
+api.get(endpoint,UserController.getAll);
+api.get(`${endpoint}/:id`, [ UserController.idAndOthersValidations ], UserController.getById);
+api.post(endpoint, UserController.objectValidation, UserController.create);
+api.patch(`${endpoint}/:id`, [ UserController.idAndOthersValidations], UserController.update);
+api.delete(`${endpoint}/:id`, [ UserController.idAndOthersValidations ], UserController.remove);
 
 module.exports = api;

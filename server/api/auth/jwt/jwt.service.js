@@ -1,19 +1,34 @@
 'use strict';
 
-var jwt = require('jwt-simple');
-var moment = require('moment');
-var secretKey = 'BZEEOGKFYK';
+const jwt = require('jwt-simple');
+const secretKey = 'BZEEOGKFYK';
 
 function createToken(user) {
 
-    var payload = {
-        sub: user.id,
-        iat: moment().unix(),
-        exp: moment().add(365, 'days')
-    }
+  const expDays = 30;
+  const today = new Date();
+  const _iat = (today.getTime() / 1000).toFixed(0);
+  const _exp = today.setDate(today.getDate() + expDays);
 
-    return jwt.encode(payload, secretKey, null, null);
+  let payload = {
+      sub: {
+          user: {
+              _id: user._id,
+              profile: user.profile,
+              role: user.role,
+          }
+      },
+      iat: _iat,
+      exp: _exp,
+  };
 
-};
+  return jwt.encode(payload, secretKey, null, null);
 
-module.exports = { createToken };
+}
+
+function getRole(token) {
+    const payload = jwt.decode(token, secretKey, null, null);
+    return payload.sub.user;
+}
+
+module.exports = { createToken, getRole };

@@ -7,7 +7,7 @@ var app = require('./app');
 
 mongoose.Promise = global.Promise;
 
-mongoose.connect('mongodb://localhost:27017/starter_db')
+mongoose.connect('mongodb://localhost:27017/fac_db_staging')
     .then(function() {
         console.log('Conectado a la BD');
         app.listen(port, function () {

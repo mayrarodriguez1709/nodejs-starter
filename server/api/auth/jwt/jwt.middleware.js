@@ -1,21 +1,24 @@
 'use strict';
 
 const jwt = require('jwt-simple');
-const moment = require('moment');
 const secretKey = 'BZEEOGKFYK';
+
 
 function ensureAuth(req, res, next) {
 
     if(!req.headers.authorization){
-        return res.status(403).json({"msg": "Authorization header required."})
+        return res.status(403).json({"message": "Authorization header required."})
     }
     let payload;
-    const token = req.headers.authorization.replace(/[' "]+/g, '');
+
+    const token = removeBearerFromToken(req);
 
     try {
         payload = jwt.decode(token, secretKey, null, null);
 
-        if(payload.exp <= moment.unix()){
+        const currentDayTmp = (new Date().getTime() / 1000).toFixed(0);
+
+        if(payload.exp <= currentDayTmp){
             return res.status(401).json({message: 'Token expired.'});
         }
     }catch (ex){
@@ -27,4 +30,15 @@ function ensureAuth(req, res, next) {
     next();
 }
 
-module.exports = { ensureAuth };
+function removeBearerFromToken(req) {
+    let token = req.headers.authorization;
+
+    if (token.startsWith('Bearer ')) {
+        // Remove Bearer from string
+        token = token.slice(7, token.length);
+    }
+
+    return token;
+}
+
+module.exports = { ensureAuth, removeBearerFromToken };

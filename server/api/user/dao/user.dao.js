@@ -1,32 +1,33 @@
 'use strict';
 
-const _ = require('lodash');
 const UserSchema = require('../model/user.model');
 const mongoose = require("mongoose");
 
 /**
- * Método para traer todos los usuarios
+ * getAll users
  */
 UserSchema.static('getAll', async (query) => {
-    let _query = query;
     try{
-        return await UserDao.find(_query).exec();
+        return await UserDao.find(query).select("-password").exec();
     }catch(err){
         throw err;
     }
 });
 
+/**
+ * getById User
+ */
 UserSchema.static('getById', async (id) => {
 
     try{
-        return await UserDao.findOne({_id: id}).exec();
+        return await UserDao.findOne({_id: id}).select("-password").exec();
     }catch (err){
         throw err;
     }
 });
 
 /**
- * Permite encontrar un usuario por su email
+ * find User by Email
  */
 UserSchema.static('getByEmail', async (email) => {
 
@@ -37,13 +38,11 @@ UserSchema.static('getByEmail', async (email) => {
     }
 });
 
-
-
 /**
- * Método para crear un usuario
+ * create User
  */
 UserSchema.static('create', async (user) => {
-    if (!_.isObject(user)) {
+    if (typeof user !== 'object') {
         throw new TypeError('User is not a valid object.');
     }
 
@@ -55,21 +54,24 @@ UserSchema.static('create', async (user) => {
 });
 
 /**
- * Método para actualizar un usuario
+ * Update User
  */
 UserSchema.static('update', async (id, user) => {
-    if (!_.isObject(user)) {
+    if (typeof user !== 'object') {
         throw new TypeError('User is not a valid object.');
     }
 
     try {
-        return await UserDao.findOneAndUpdate({_id: id}, user, {new: true}).exec();
+        return await UserDao.findOneAndUpdate({_id: id}, user, {new: true}).select("-password").exec();
     }catch (err){
         throw err;
     }
 });
 
 
+/**
+ * Remove User
+ */
 UserSchema.static('remove', async (id) =>{
     try{
         return await UserDao.findOneAndRemove({_id: id}).exec();
